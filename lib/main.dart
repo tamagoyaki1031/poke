@@ -1,10 +1,12 @@
+import 'dart:ffi';
 
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'dart:convert';
 import 'package:http/http.dart'as http;
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -41,6 +43,15 @@ class _MyHomePageState extends State<MyHomePage> {
   int _currentStep =0;
   final myController = TextEditingController();
   final myController2 = TextEditingController();
+  // ユーザの情報を格納する辞書配列
+  Map<String,dynamic> user = {
+    'trainer':nullptr,
+    'email':nullptr,
+    'birthdate':nullptr,
+    'origin':nullptr,
+    'pokeimage':[],
+    'pokename':[]
+  };
   String name = "";
   String juusyo1 = '';
   String email= "";
@@ -59,7 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             onChanged: (text) {
               // TODO: ここで取得したtextを使う
+              // トレーナー名
               name = text;
+              user['trainer']= name;
             },
 
           ),
@@ -69,31 +82,10 @@ class _MyHomePageState extends State<MyHomePage> {
               hintText: 'メールアドレス',
             ),
             onChanged: (text){
+              // メールアドレス
               email = text;
+              user['email'] = email;
             },
-
-          ),
-          TextButton(
-            onPressed: () {
-              DatePicker.showDatePicker(context,
-                  showTitleActions: true,
-                  minTime: DateTime(2000, 1, 1),
-                  maxTime: DateTime(2023, 12, 31),
-                  onConfirm: (date) {
-                    setState(() {
-                      dateText = '${date.year}年${date.month}月${date.day}日';
-                    });
-                  },
-                  currentTime: DateTime.now(),
-                  locale: LocaleType.jp
-              );
-            },
-            child: const Text(
-              '日付を選択',
-              style: TextStyle(
-                fontSize: 24,
-              ),
-            ),
           ),
 
         ],
@@ -134,7 +126,8 @@ class _MyHomePageState extends State<MyHomePage> {
       }else{
         setState(() {
           errorMessage="";
-          juusyo1 = results[0]['address1']+results[0]['address2']+results[0]['address3'];
+          juusyo1 = results[0]['address1']+results[0]['address2'];
+          user['origin']=juusyo1;
 
         });
       }
@@ -157,11 +150,29 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           },
         ),
-        Title(color: Colors.black, child: Text('あなたの住所')),
+        Title(color: Colors.black, child: Text('トレーナーの出身地')),
+        Text('$juusyo1')
       ],
     ),
     );
 
+  }
+  // 生年月日を入力させるウィジェット
+  Widget birthday(){
+    return ElevatedButton(
+        onPressed: (){
+          DatePicker.showDatePicker(
+            context,
+            // 選択できる日時の範囲
+            minTime: DateTime(1924, 1, 1),
+            maxTime: DateTime(2030, 12, 31),
+            // 関数(onChangedなど)は省略
+            //言語
+            locale: LocaleType.jp,
+          );
+
+        },
+        child: Text('生年月日'));
   }
   Widget customDoneButton() {
     return GestureDetector(
@@ -197,24 +208,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
           steps: <Step>[
             Step(
-              title: const Text('トレーナ名'),
+              title: const Text('トレーナ登録'),
               content: Column(children: [
-                Text('名前と趣味を入力'),
-                NameInput()
+                Text('トレーナ名とメールアドレス、出身地を入力'),
+                NameInput(),
+                juusyoKensaku(),
+                
               ]),
               isActive: _currentStep>=1,
               state: _currentStep>=0?StepState.complete:StepState.disabled,
             ),
             Step(
-              title: const Text('ステップ2'),
+              title: const Text('ポケモンをゲット'),
               content: Column(
                 children: [
-                  Title(color: Colors.black, child: Text('ステップ２です'),),
-                  Text('$nameの住所を入力'),
-                  juusyoKensaku(),
-                  Text('$juusyo1')
-
-
+                    Text('${name}のポケモンをゲットしよう！！'),
+                    Text('生年月日を入力してね'),
+                    birthday(),
+                  Title(color: Colors.black, child: Text('あなたがゲットしたポケモン',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),))
                 ],
               ),
 
