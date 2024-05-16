@@ -1,8 +1,9 @@
-import 'dart:ffi';
-
+import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:convert';
 import 'package:http/http.dart'as http;
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
@@ -45,19 +46,22 @@ class _MyHomePageState extends State<MyHomePage> {
   final myController2 = TextEditingController();
   // ユーザの情報を格納する辞書配列
   Map<String,dynamic> user = {
-    'trainer':nullptr,
-    'email':nullptr,
-    'birthdate':nullptr,
-    'origin':nullptr,
-    'pokeimage':[],
-    'pokename':[]
+    'trainer':null,
+    'email':null,
+    'birthdate':null,
+    'origin':null,
+    'pokeimage':[''],
+    'pokename':['']
   };
   String name = "";
   String juusyo1 = '';
   String email= "";
   String aisatu = "この入力内容でいいですか？";
   String dateText = "";
-  // 名前、趣味の入力欄のウィジェット
+  String userBirthday = "";
+  int index = 0;
+  bool flag = false;
+  // 名前、メールアドレスの入力欄のウィジェット
   Widget NameInput(){
 
     return Container(
@@ -85,6 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
               // メールアドレス
               email = text;
               user['email'] = email;
+
             },
           ),
 
@@ -93,6 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // トレーナーの出身地を住所検索で表示する
   Widget juusyoKensaku(){
     // 住所などが文字列で入る
     List<String> items = [];
@@ -129,6 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
           juusyo1 = results[0]['address1']+results[0]['address2'];
           user['origin']=juusyo1;
 
+
         });
       }
     }
@@ -158,7 +165,45 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
   // 生年月日を入力させるウィジェット
-  Widget birthday(){
+  Widget  birthday(){
+    // 住所などが文字列で入る
+    List<String> items = [];
+    // エラーメッセージ用の変数
+    String errorMessage='';
+
+    // 非同期処理の書き方↓
+     Future<void> pokesearch(String pokeid)async{
+      setState(() {
+        errorMessage= 'APIレスポンス待ち';
+      });
+      final response = await http.get(
+        // ↓住所検索のAPIのURL
+          Uri.parse('https://pokeapi.co/api/v2/pokemon/${pokeid}/')
+      );
+      //   失敗の場合成功の時の値が２００だから
+      if(response.statusCode != 200){
+        setState(() {
+          errorMessage = 'エラーが発生しました:${response.statusCode}';
+        });
+        return;
+      }
+      // 成功の場合
+      final body = json.decode(response.body) as Map<String,dynamic>;
+
+      if(body.isEmpty){
+        setState(() {
+          errorMessage ='そのようなポケモンはいません';
+        });
+      }else{
+        setState(() {
+          errorMessage="";
+          print('pokemonの名前'+body['name']);
+          user['pokename']=body['name'];
+          user['pokename'][0][index] = body['name'];
+          flag = true;
+        });
+      }
+    }
     return ElevatedButton(
         onPressed: (){
           DatePicker.showDatePicker(
@@ -166,6 +211,21 @@ class _MyHomePageState extends State<MyHomePage> {
             // 選択できる日時の範囲
             minTime: DateTime(1924, 1, 1),
             maxTime: DateTime(2030, 12, 31),
+            // ドラムロールの完了ボタンを押したときの処理
+            onConfirm: (date)  {
+              setState(()  {
+                if(date.day <10){
+                  userBirthday = date.month.toString()+'0'+date.day.toString();
+                }else{
+                  userBirthday = date.month.toString()+date.day.toString();
+                }
+                print('ポケモンAPI');
+                user['pokeimage'] =  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${userBirthday}.png";
+
+                pokesearch(userBirthday);
+              });
+
+            },
             // 関数(onChangedなど)は省略
             //言語
             locale: LocaleType.jp,
@@ -173,6 +233,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
         },
         child: Text('生年月日'));
+  }
+
+
+
+  Widget pokeinfo(image,String name){
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,   // <== 追加
+        children: [
+          Image.network(
+           image,
+            height: 100,
+            width: 100,
+          ),
+           Text(
+            '${name}',
+            style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
   Widget customDoneButton() {
     return GestureDetector(
@@ -183,6 +265,41 @@ class _MyHomePageState extends State<MyHomePage> {
         '完了',
       ),
     );
+  }
+
+  // 追加したいと気の処理用
+  Future<void> pokesearch(String pokeid)async{
+    setState(() {
+
+    });
+    final response = await http.get(
+      // ↓住所検索のAPIのURL
+
+        Uri.parse('https://pokeapi.co/api/v2/pokemon/${pokeid}/')
+    );
+    //   失敗の場合成功の時の値が２００だから
+    if(response.statusCode != 200){
+      setState(() {
+
+      });
+      return;
+    }
+    // 成功の場合
+    final body = json.decode(response.body) as Map<String,dynamic>;
+
+    if(body.isEmpty){
+      setState(() {
+
+      });
+    }else{
+      setState(() {
+        index+=1;
+        print('pokemonの名前'+body['name']);
+        user['pokename']=body['name'];
+        user['pokename'][0][index] = body['name'];
+        flag = true;
+      });
+    }
   }
 
 
@@ -225,7 +342,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     Text('${name}のポケモンをゲットしよう！！'),
                     Text('生年月日を入力してね'),
                     birthday(),
-                  Title(color: Colors.black, child: Text('あなたがゲットしたポケモン',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),))
+                  Title(color: Colors.black, child: Text('あなたがゲットしたポケモン',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
+                  ),
+                 // Text('${user['pokename']}'),
+                 // Image.network('${user['pokeimage']}'),
+                 //  ↓を繰り返しにしたい
+                  flag? pokeinfo(user['pokeimage'],  user['pokename']):Text('ゲットしたポケモンが表示されるよ'),
+                  ElevatedButton(onPressed: (){
+                    var random = math.Random();
+                    var num =random.nextInt(1000).toString();
+                    pokesearch(num);
+
+
+                  },
+                      child: Text('もう一体獲得'))
+
                 ],
               ),
 
