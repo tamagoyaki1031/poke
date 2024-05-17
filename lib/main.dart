@@ -254,6 +254,7 @@ class _MyHomePageState extends State<MyHomePage> {
               '${name}',
               style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
             ),
+            ElevatedButton(onPressed: (){}, child: Text('鳴き声'))
           ],
         ),
 

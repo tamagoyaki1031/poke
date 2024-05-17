@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   http: ^1.2.1
   flutter_datetime_picker_plus: ^2.1.0
+  just_audio: ^0.9.37
 
 dev_dependencies:
   flutter_test:
