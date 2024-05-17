@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Stepper'),
+      home: const MyHomePage(title: 'ポケモンゲットだぜ！'),
     );
   }
 }
@@ -50,7 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
     'birthdate': null,
     'origin': null,
     'pokeimage': [],
-    'pokename': []
+    'pokename': [],
+    'pokegif':[]
   };
   String name = "";
   String juusyo1 = '';
@@ -220,7 +221,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
                 print('ポケモンAPI');
                 user['pokeimage'].add(
-                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${userBirthday}.png");
+                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${userBirthday}.gif");
+                if(int.parse(userBirthday) >649){
+                  user['pokegif'].add("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${userBirthday}.gif");
+
+                }else{
+                  user['pokegif'].add("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${userBirthday}.gif");
+                }
 
                 pokesearch(userBirthday);
               });
@@ -289,8 +296,14 @@ class _MyHomePageState extends State<MyHomePage> {
         len = user['pokename'].length;
         print(user['pokename']);
         user['pokeimage'].add(
-            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokeid}.png");
+            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokeid}.gif");
         print(user['pokeimage']);
+        if(int.parse(pokeid) >649){
+          user['pokegif'].add("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokeid}.gif");
+
+        }else{
+          user['pokegif'].add("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${pokeid}.gif");
+        }
 
         flag = true;
       });
@@ -304,6 +317,36 @@ class _MyHomePageState extends State<MyHomePage> {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text(widget.title),
         ),
+        // ハンバーガーメニュー↓
+      endDrawer: Drawer(
+        backgroundColor: Colors.yellow,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(30),
+                child: Text(
+                  '手持のポケモン',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+
+                  ),
+                ),
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: user['pokename'].length,
+                itemBuilder: (context, index) {
+                  return pokeinfo(user['pokegif'][index], user['pokename'][index]);
+                },
+              ),
+            ],
+          ),
+
+    ),
+        ), // ここを追加
         body:
         Stepper(
           type: StepperType.vertical,
